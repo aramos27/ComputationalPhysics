@@ -152,7 +152,7 @@ Nt = 1000 #Duration of simulation [s]
 p = 0.15 # Dawdling probability
 
 cells = init_cells(Nc, ρ) #Random positions at beginning
-cells = init_cells_traffic_light(Nc, ρ) #Start at stoplight
+#cells = init_cells_traffic_light(Nc, ρ) #Start at stoplight
 
 filename = "traffic_rho$(ρ)_p$(p).png"
 
