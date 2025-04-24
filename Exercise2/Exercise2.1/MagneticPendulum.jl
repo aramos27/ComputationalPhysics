@@ -1,11 +1,12 @@
 using LinearAlgebra
 using GLMakie
+using JLD2
 using Colors  
 GLMakie.activate!(; float = true, focus_on_show = true)
 
 const kg = 0.2 #Gravitational Interaction
 const km = 20.0 #Magnetic Interaction
-const γ = 0.05 #Friction
+const γ = 0.5 #Friction
 const R = 1.0 #Circle radius
 const h = 0.2 #Separation between planes
 const τ = 0.001  # time step 
@@ -95,7 +96,7 @@ function grid_simulation(gridLength::Int)
             classification[i,j] = classify_endpoint(r_final)
             count += 1
             if count % 1000 == 0
-                println("Progress: $count / $total points simulated")
+                println("Progress: $((count/total)*100) %")
             end
         end
     end
@@ -104,11 +105,12 @@ end
 
 #Plots results with three different colors. 
 function plot_classification_grid(classification::Array{Int,2})
+    
     value_to_color = Dict(
-        1 => RGB(0, 0, 1),   # blue
-        2 => RGB(0, 1, 0),   # green
-        3 => RGB(1, 0, 0)    # red
-    )
+    1 => parse(Colorant, "#FF6F00"),  # Vibrant metallic orange (amber/orange anodized aluminum)
+    2 => parse(Colorant, "#3B9C9C"),  # Deep metallic teal
+    3 => parse(Colorant, "#8A2BE2")   # Electric indigo (bold and complementary)
+)
 
     color_data = [value_to_color[x] for x in classification]
     color_matrix = reshape(color_data, size(classification))
@@ -205,18 +207,50 @@ function animate_trajectory(initial_r::Vector{Float64}, initial_v::Vector{Float6
     end
 end
 
+using Base.Threads
+using Base.Threads: Atomic, atomic_add!
+
+function grid_simulation_multithread(gridLength::Int)
+    grid = range(-2, 2, gridLength)
+    classification = Matrix{Int}(undef, gridLength, gridLength)
+
+    total = gridLength^2
+    counter = Atomic{Int}(0)
+
+    @threads for idx in 1:total
+        i = fld(idx - 1, gridLength) + 1  # row (y)
+        j = mod(idx - 1, gridLength) + 1  # column (x)
+
+        r0 = [grid[j], grid[i]]
+        r_final = simulate_pendulum(r0)
+        classification[j, i] = classify_endpoint(r_final)
+
+        # Update progress
+        current = atomic_add!(counter, 1)
+        if current % (total ÷ 100) == 0
+            println("Progress: $(round(current / total * 100; digits=1))%")
+        end
+    end
+
+    return classification
+end
 
 function main()
-    classification = grid_simulation(200)
+    discretization_size = 10000
+    classification = grid_simulation_multithread(discretization_size)
+    
+    @save "classification_$discretization_size.jld2" classification
     fig = plot_classification_grid(classification)
-    save("Fractal.png", fig)
+    save("Fractal_$discretization_size.png", fig)
 end
 
 main()
-
+#initial_r = [2.0, 2.0]
+#initial_v = [0.0,0.0]
 #fig = simulate_and_plot(initial_r, initial_v)
 #save("Plots.png", fig)
-#animate_trajectory(initial_r, initial_v, "pendulum_animation.mp4")
+
+#animate_trajectory(initial_r, initial_v, "pendulum_animation1.mp4")
 
 
 
