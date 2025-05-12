@@ -58,7 +58,7 @@ function simulate_pendulum(r0::Vector{Float64})
     for step in 1:max_steps
         r_new, v_new = rk4_step(r, v)
 
-        if norm(v_new) < 1e-6 && norm(r_new - r) < 1e-6 #Early termination condition
+        if norm(v_new) < 1e-4 && norm(r_new - r) < 1e-4 #Early termination condition
             return r_new  # final resting position
         end
 
@@ -126,7 +126,7 @@ function plot_classification_grid(classification::Array{Int,2})
 
     return f
 end
-
+#________
 #Plots trajectory from a given initial position and initial velocity. 
 function simulate_and_plot(initial_r::Vector{Float64}, initial_v::Vector{Float64})
     r = copy(initial_r)
@@ -236,21 +236,21 @@ function grid_simulation_multithread(gridLength::Int)
 end
 
 function main()
-    discretization_size = 10000
-    classification = grid_simulation_multithread(discretization_size)
+    discretization_size = 200
+    classification = grid_simulation(discretization_size)
     
-    @save "classification_$discretization_size.jld2" classification
+    #@save "classification_$discretization_size.jld2" classification
     fig = plot_classification_grid(classification)
-    save("Fractal_$discretization_size.png", fig)
+    save("Fractal_0.5_$discretization_size.png", fig)
 end
 
 main()
-#initial_r = [2.0, 2.0]
-#initial_v = [0.0,0.0]
-#fig = simulate_and_plot(initial_r, initial_v)
-#save("Plots.png", fig)
+initial_r = [-1.3, 1.3]
+initial_v = [0.0,0.0]
+fig = simulate_and_plot(initial_r, initial_v)
+save("AnimationPlot0.5.png", fig)
 
-#animate_trajectory(initial_r, initial_v, "pendulum_animation1.mp4")
+animate_trajectory(initial_r, initial_v, "animation0.5.mp4")
 
 
 

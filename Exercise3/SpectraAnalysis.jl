@@ -7,7 +7,7 @@ const k = 1
 const Ω = 2/3
 const T_0 = (2*π)/Ω
 const τ = T_0/200
-
+ 
 const total_periods = 1000
 const ignore_periods = 100
 const steps = Int(total_periods * T_0 / τ)
@@ -67,6 +67,25 @@ function simulate_for_Q(Q::Float64)
 end
 
 
+function bifurcation_plot()
+    Q_vals = 0.0:0.001:2.0
+    Q_plot = Float64[]
+    V_plot = Float64[]
+
+    for Q in Q_vals
+        velocities = simulate_for_Q(Q)
+        for v in velocities
+            push!(Q_plot, Q)
+            push!(V_plot, v)
+        end
+    end
+
+    fig = GLMakie.Figure()
+    ax = Axis(fig[1, 1]; xlabel="Q", ylabel="v (at x-crossing)", title="Bifurcation Diagram")
+    scatter!(ax, Q_plot, V_plot; markersize=1)
+    return fig
+end
+
 function stroboscopic_plot(Q::Float64, sampling::Bool)
     x = 1.0
     v = 0.0
@@ -103,25 +122,6 @@ function stroboscopic_plot(Q::Float64, sampling::Bool)
 end
 
 
-function bifurcation_plot()
-    Q_vals = 0.0:0.001:2.0
-    Q_plot = Float64[]
-    V_plot = Float64[]
-
-    for Q in Q_vals
-        velocities = simulate_for_Q(Q)
-        for v in velocities
-            push!(Q_plot, Q)
-            push!(V_plot, v)
-        end
-    end
-
-    fig = GLMakie.Figure()
-    ax = Axis(fig[1, 1]; xlabel="Q", ylabel="v (at x-crossing)", title="Bifurcation Diagram")
-    scatter!(ax, Q_plot, V_plot; markersize=1)
-    return fig
-end
-
 function power_spectrum(Q::Float64)
     steps_b = 2^16
 
@@ -153,32 +153,39 @@ function power_spectrum(Q::Float64)
     fig = Figure(resolution=(800, 500))
     ax = Axis(fig[1, 1], xlabel="Frequency f", ylabel="log P_L(f)", title="Power Spectrum Q = $Q")
     lines!(ax, freqs_plot, logP)
-    xlims!(ax, 0, 6f0)
+    xlims!(ax, 0, 6*f0)
+    ylims!(ax, 0, 12)
     
     return fig
 end
 
-fig1 = power_spectrum(0.5)
-fig2 = power_spectrum(1.07)
-fig3 = power_spectrum(1.2)
-save("PowerSpectrum0.5.png", fig1)
-save("PowerSpectrum1.07.png", fig2)
-save("PowerSpectrum1.2.png", fig3)
 
-#=
-bifurcation = bifurcation_plot()
-save("Bifurcation.png", bifurcation)
-=#
 
-#=
-sampling = false
-fig1 = stroboscopic_plot(0.5, sampling)
-fig2 = stroboscopic_plot(1.07, sampling)
-fig3 = stroboscopic_plot(1.2, sampling)
+function exercise_a1()
+    bifurcation = bifurcation_plot()
+    save("Bifurcation.png", bifurcation)
+end
+#exercise_a1()
 
-save("Two_Pi_Omega.png", fig1)
-save("Four_Pi_Omega.png", fig2)
-save("Aperiodic.png", fig3)
-=#
+function exercise_a2(sampling::Bool)
+    fig1 = stroboscopic_plot(0.5, sampling)
+    fig2 = stroboscopic_plot(1.07, sampling)
+    fig3 = stroboscopic_plot(1.2, sampling)
+
+    save("Two_Pi_Omega.png", fig1)
+    save("Four_Pi_Omega.png", fig2)
+    save("Aperiodic.png", fig3)
+end
+#exercise_a2(false)
+
+function exercise_b()
+    fig1 = power_spectrum(0.5)
+    fig2 = power_spectrum(1.07)
+    fig3 = power_spectrum(1.2)
+    save("PowerSpectrum0.5.png", fig1)
+    save("PowerSpectrum1.07.png", fig2)
+    save("PowerSpectrum1.2.png", fig3)
+end
+exercise_b()
 
 
